@@ -1,11 +1,9 @@
-"""Export PSA Robotics Team data to excel file"""
+""" Export South Carolina Robotics Teams data to excel file"""
 
 import json
 from urllib.request import urlopen
 import pandas as pd
 
-team_list = ['9447A', '9447B', '9447C', '9447D',
-             '9447F', '9447G', '9447H', '9447J', '9447K', '9447S']
 season_list = ['Bridge%20Battle', 'Elevation', 'Clean%20Sweep', 'Round%20Up', 'Gateway', 'Sack%20Attack', 'Toss%20Up',
                'Skyrise', 'Nothing%20But%20Net', 'Starstruck', 'In%20The%20Zone', 'Turning%20Point', 'Tower%20Takeover', 'Change%20Up']
 
@@ -22,27 +20,28 @@ df_rank = pd.DataFrame()  # Event rankings for each season/team
 df_award = pd.DataFrame()  # List of awards won
 df_skills = pd.DataFrame()  # List of skills scores
 df_matches = pd.DataFrame()  # Match Details
-df_Vranking = pd.DataFrame()  # Season Rankings
+df_vranking = pd.DataFrame()  # Season Rankings
 df_events = pd.DataFrame()  # Events
 
 # pd.set_option('display.max_rows', None)
 
 # Teams DataFrame
-for team in team_list:
-    with urlopen(f'https://api.vexdb.io/v1/get_teams?team={team}') as resp:
-        teams = resp.read()
-        team_data = json.loads(teams)
-        data = (team_data['result'])
-        df_temp = pd.DataFrame.from_dict(data)
-        df_team = df_team.append(df_temp, ignore_index=True)
+with urlopen(f'https://api.vexdb.io/v1/get_teams?region=South%20Carolina&grade=High%20School') as resp:
+    teams = resp.read()
+    team_data = json.loads(teams)
+    data = (team_data['result'])
+    df_temp = pd.DataFrame.from_dict(data)
+    df_team = df_team.append(df_temp, ignore_index=True)
 df_team.drop(columns=['program', 'country', 'grade'], inplace=True)
 df_team.rename(columns={'region': 'state'}, inplace=True)
 print(df_team)
 
+team_list = df_team['number']  # create list of SC teams
+
 # Rank for each event
-for team in team_list:
+for index, value in team_list.items():
     for season in season_list:
-        with urlopen(f'https://api.vexdb.io/v1/get_rankings?team={team}&season={season}') as resp:
+        with urlopen(f'https://api.vexdb.io/v1/get_rankings?team={value}&season={season}') as resp:
             rank = resp.read()
             rank_data = json.loads(rank)
             data = (rank_data['result'])
@@ -53,9 +52,9 @@ df_rank.rename(columns={'rank': 'qualifying_rank'}, inplace=True)
 print(df_rank)
 
 # Awards won at each event
-for team in team_list:
+for index, value in team_list.items():
     for season in season_list:
-        with urlopen(f'https://api.vexdb.io/v1/get_awards?team={team}&season={season}') as resp:
+        with urlopen(f'https://api.vexdb.io/v1/get_awards?team={value}&season={season}') as resp:
             award = resp.read()
             award_data = json.loads(award)
             data = (award_data['result'])
@@ -69,9 +68,9 @@ df_award.drop(columns=['qualifies', 'order', 'vrc'], inplace=True)
 print(df_award)
 
 # Skills rankings for each event
-for team in team_list:
+for index, value in team_list.items():
     for season in season_list:
-        with urlopen(f'https://api.vexdb.io/v1/get_skills?team={team}&season={season}') as resp:
+        with urlopen(f'https://api.vexdb.io/v1/get_skills?team={value}&season={season}') as resp:
             skill = resp.read()
             skill_data = json.loads(skill)
             data = (skill_data['result'])
@@ -79,72 +78,73 @@ for team in team_list:
             df_skills = df_skills.append(df_temp, ignore_index=True)
 df_skills.rename(columns={'rank': 'skills_rank'}, inplace=True)
 df_skills.drop(columns=['program'], inplace=True)
-df_skills.replace({'type': {0: 'Driver', 1: 'Programming',
-                            2: 'Combined'}}, inplace=True)
+df_skills.replace(
+    {'type': {0: 'Driver', 1: 'Programming', 2: 'Combined'}}, inplace=True)
 print(df_skills)
 
 # Match detail for each event
-for team in team_list:
-    for season in season_list:
-        with urlopen(f'https://api.vexdb.io/v1/get_matches?team={team}&season={season}') as resp:
-            match = resp.read()
-            match_data = json.loads(match)
-            data = (match_data['result'])
-            df_temp = pd.DataFrame.from_dict(data)
-            df_matches = df_matches.append(df_temp, ignore_index=True)
-df_matches.drop(columns=['field', 'scored', 'scheduled'], inplace=True)
-print(df_matches)
+# for index, value in team_list.items():
+#    for season in season_list:
+#        with urlopen(f'https://api.vexdb.io/v1/get_matches?team={value}&season={season}') as resp:
+#            match = resp.read()
+#            match_data = json.loads(match)
+#            data = (match_data['result'])
+#            df_temp = pd.DataFrame.from_dict(data)
+#            df_matches = df_matches.append(df_temp, ignore_index=True)
+# df_matches.drop(columns=['instance', 'field',
+#                         'scored', 'scheduled'], inplace=True)
+# print(df_matches)
 
 # V-ranking for each season
-for team in team_list:
+for index, value in team_list.items():
     for season in season_list:
-        with urlopen(f'https://api.vexdb.io/v1/get_season_rankings?team={team}&season={season}') as resp:
+        with urlopen(f'https://api.vexdb.io/v1/get_season_rankings?team={value}&season={season}') as resp:
             rank = resp.read()
             rank_data = json.loads(rank)
             data = (rank_data['result'])
             df_temp = pd.DataFrame.from_dict(data)
-            df_Vranking = df_Vranking.append(df_temp, ignore_index=True)
-print(df_Vranking)
+            df_vranking = df_vranking.append(df_temp, ignore_index=True)
+print(df_vranking)
 
 # remove duplicates for events
-drop_matches = df_matches.drop_duplicates(subset=['sku'], keep='first')
-sku = drop_matches['sku']
+# drop_matches = df_matches.drop_duplicates(subset=['sku'], keep='first')
+# sku = drop_matches['sku']
 
-for index, value in sku.items():
-    with urlopen(f'https://api.vexdb.io/v1/get_events?sku={value}') as resp:
-        event = resp.read()
-        event_data = json.loads(event)
-        data = (event_data['result'])
-        df_temp = pd.DataFrame.from_dict(data)
-        df_events = df_events.append(df_temp, ignore_index=True)
+# for index, value in sku.items():
+with urlopen(f'https://api.vexdb.io/v1/get_events?program=VRC&region=South%20Carolina') as resp:
+    event = resp.read()
+    event_data = json.loads(event)
+    data = (event_data['result'])
+    df_temp = pd.DataFrame.from_dict(data)
+    df_events = df_events.append(df_temp, ignore_index=True)
 df_events[['start', 'delete']] = df_events['start'].str.split('T', expand=True)
 df_events.drop(columns=['key', 'program', 'loc_address1', 'loc_address2',
                         'loc_postcode', 'loc_country', 'end', 'divisions', 'delete'], inplace=True)
-df_events.rename(columns={'name': 'event', 'loc_venue': 'venue', 'loc_city': 'city',
-                          'loc_region': 'state'}, inplace=True)
+df_events.rename(columns={'name': 'event', 'loc_venue': 'venue',
+                          'loc_city': 'city', 'loc_region': 'state'}, inplace=True)
 df_events.sort_values(by='start', ignore_index=True, inplace=True)
 
-df_results = pd.merge(df_events, df_rank, on='sku', how='left',
-                      sort=False)  # merge dataframes
+print(df_events)
+df_results = pd.merge(df_events, df_rank, on='sku',
+                      how='left', sort=False)  # merge dataframes
 print(df_results)
-
 
 # print(list(df_results))
 # print(list(df_team))
 # print(list(df_events))
 # print(list(df_rank))
-# print(list(df_Vranking))
+# print(list(df_vranking))
 # print(list(df_award))
 # print(list(df_skills))
 # print(list(df_matches))
 # print(list(df_seasons))
 # print(list(df_awardlist))
 
-with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/PSA_Robotics.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
+with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/SC_Robotics.xlsx') as writer:
     df_results.to_excel(writer, sheet_name='Event Results', index=False)
     df_award.to_excel(writer, sheet_name='Awards', index=False)
     df_skills.to_excel(writer, sheet_name='Skills', index=False)
-    df_Vranking.to_excel(writer, sheet_name='V-ranking', index=False)
+    df_vranking.to_excel(writer, sheet_name='Vranking', index=False)
     df_team.to_excel(writer, sheet_name='Teams', index=False)
     df_events.to_excel(writer, sheet_name='Events', index=False)
     df_seasons.to_excel(writer, sheet_name='Seasons', index=False)
