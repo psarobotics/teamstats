@@ -12,9 +12,9 @@ S = {'season': ['Bridge Battle', 'Elevation', 'Clean Sweep', 'Round Up', 'Gatewa
     '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020'], 'end date': ['2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021']}
 A = {'award': ['Excellence Award', 'Tournament Champions', 'Tournament Finalists', 'Design Award', 'Judges Award', 'Robot Skills Champion', 'Amaze Award', 'Think Award', 'Innovate Award', 'Build Award', 'Create Award',
                'Online Challenge', 'Energy Award', 'Inspire Award', 'Service Award', 'Sportsmanship Award'], 'order': ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']}
+
 df_seasons = pd.DataFrame(data=S)
 df_awardlist = pd.DataFrame(data=A)
-
 df_team = pd.DataFrame()  # List of Teams
 df_rank = pd.DataFrame()  # Event rankings for each season/team
 df_award = pd.DataFrame()  # List of awards won
@@ -85,15 +85,15 @@ print(df_skills)
 # Match detail for each event
 # for index, value in team_list.items():
 #    for season in season_list:
-#        with urlopen(f'https://api.vexdb.io/v1/get_matches?team={value}&season={season}') as resp:
-#            match = resp.read()
-#            match_data = json.loads(match)
-#            data = (match_data['result'])
-#            df_temp = pd.DataFrame.from_dict(data)
-#            df_matches = df_matches.append(df_temp, ignore_index=True)
-# df_matches.drop(columns=['instance', 'field',
-#                         'scored', 'scheduled'], inplace=True)
-# print(df_matches)
+#    with urlopen(f'https://api.vexdb.io/v1/get_matches?team={value}&season={season}') as resp:
+#       #            match = resp.read()
+#       #            match_data = json.loads(match)
+#       #            data = (match_data['result'])
+#       #            df_temp = pd.DataFrame.from_dict(data)
+#       #            df_matches = df_matches.append(df_temp, ignore_index=True)
+#    df_matches.drop(columns=['instance', 'field',
+#                             'scored', 'scheduled'], inplace=True)
+#    print(df_matches)
 
 # V-ranking for each season
 for index, value in team_list.items():
@@ -129,18 +129,18 @@ df_results = pd.merge(df_events, df_rank, on='sku',
                       how='left', sort=False)  # merge dataframes
 print(df_results)
 
-# print(list(df_results))
-# print(list(df_team))
-# print(list(df_events))
-# print(list(df_rank))
-# print(list(df_vranking))
-# print(list(df_award))
-# print(list(df_skills))
-# print(list(df_matches))
-# print(list(df_seasons))
-# print(list(df_awardlist))
+print(list(df_results))
+print(list(df_team))
+print(list(df_events))
+print(list(df_rank))
+print(list(df_vranking))
+print(list(df_award))
+print(list(df_skills))
+print(list(df_matches))
+print(list(df_seasons))
+print(list(df_awardlist))
 
-with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/SC_Robotics.xlsx') as writer:
+with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/SC_Robotics.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
     df_results.to_excel(writer, sheet_name='Event Results', index=False)
     df_award.to_excel(writer, sheet_name='Awards', index=False)
     df_skills.to_excel(writer, sheet_name='Skills', index=False)
