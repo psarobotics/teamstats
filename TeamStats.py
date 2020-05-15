@@ -1,13 +1,24 @@
-"'season'""Export PSA Robotics Team data to excel file"""
+"""Retrieve VEX Robotics Team data from vexdb.io and export to excel file"""
 
 import json
 from urllib.request import urlopen
 import pandas as pd
 import numpy as np
+import os
 
-df_new = pd.DataFrame()
+df_team = pd.DataFrame()  # List of Teams
+df_rank = pd.DataFrame()  # Event rankings for each season/team
+df_award = pd.DataFrame()  # List of awards won
+df_skills = pd.DataFrame()  # List of skills scores
+df_matches = pd.DataFrame()  # Match Details
+df_vranking = pd.DataFrame()  # Season Rankings
+df_events = pd.DataFrame()  # Events
+
+# pd.set_option('display.max_rows', None)
+
 letr_list = list(map(chr, range(65, 91)))
 
+os.system('clear')  # use ('cls') for windows
 team_input = input(
     "Enter the team number (Do not add letter)  ")
 for let in letr_list:
@@ -16,10 +27,14 @@ for let in letr_list:
         db_data = json.loads(db)
         data = (db_data['result'])
         df_temp = pd.DataFrame.from_dict(data)
-        df_new = df_new.append(df_temp, ignore_index=True)
-print(df_new)
+        df_team = df_team.append(df_temp, ignore_index=True)
+df_team.drop(columns=['program', 'country'], inplace=True)
+df_team.rename(columns={'region': 'state'}, inplace=True)
+os.system('clear')
+print(df_team)
+print()
 
-team_list = df_new['number']
+team_list = df_team['number']
 
 season_list = ['Bridge%20Battle', 'Elevation', 'Clean%20Sweep', 'Round%20Up', 'Gateway', 'Sack%20Attack', 'Toss%20Up',
                'Skyrise', 'Nothing%20But%20Net', 'Starstruck', 'In%20The%20Zone', 'Turning%20Point', 'Tower%20Takeover', 'Change%20Up']
@@ -33,19 +48,11 @@ A = {'award': ['Excellence Award', 'Tournament Champions', 'Tournament Finalists
 
 df_seasons = pd.DataFrame(data=S)
 df_awardlist = pd.DataFrame(data=A)
-df_team = pd.DataFrame()  # List of Teams
-df_rank = pd.DataFrame()  # Event rankings for each season/team
-df_award = pd.DataFrame()  # List of awards won
-df_skills = pd.DataFrame()  # List of skills scores
-df_matches = pd.DataFrame()  # Match Details
-df_vranking = pd.DataFrame()  # Season Rankings
-df_events = pd.DataFrame()  # Events
-
-# pd.set_option('display.max_rows', None)
 
 
 def fetch_data(get):
     df_new = pd.DataFrame()
+    print(f'fetching {get} data')
     for season in season_list:
         for team in team_list:
             with urlopen(f'https://api.vexdb.io/v1/{get}?team={team}&season={season}') as resp:
@@ -54,20 +61,12 @@ def fetch_data(get):
                 data = (db_data['result'])
                 df_temp = pd.DataFrame.from_dict(data)
                 df_new = df_new.append(df_temp, ignore_index=True)
+            print('.', end='', flush=True)
+        print('.')
     return df_new
 
 
-# Teams DataFrame
-for team in team_list:
-    with urlopen(f'https://api.vexdb.io/v1/get_teams?team={team}') as resp:
-        teams = resp.read()
-        team_data = json.loads(teams)
-        data = (team_data['result'])
-        df_temp = pd.DataFrame.from_dict(data)
-        df_team = df_team.append(df_temp, ignore_index=True)
-df_team.drop(columns=['program', 'country', 'grade'], inplace=True)
-df_team.rename(columns={'region': 'state'}, inplace=True)
-
+print('working.', end=' ')
 #   Event list for each team
 df_events = fetch_data('get_events')
 df_events[['start', 'delete']] = df_events['start'].str.split('T', expand=True)
@@ -91,7 +90,6 @@ df_award.rename(columns={'name': 'award', 'team': 'number'}, inplace=True)
 df_award[['award', 'vrc']] = df_award['award'].str.split('(', expand=True)
 df_award = df_award.stack().str.rstrip().unstack()
 df_award.drop(columns=['qualifies', 'order', 'vrc'], inplace=True)
-# df_award.drop_duplicates(keep='first', inplace=True)
 
 #  Skills rankings for each event
 df_skills = fetch_data('get_skills')
@@ -100,7 +98,6 @@ df_skills.drop(columns=['program'], inplace=True)
 df_skills.replace({'type': {0: 'Driver', 1: 'Programming',
                                2: 'Combined'}}, inplace=True)
 df_skills.rename(columns={'team': 'number'}, inplace=True)
-# df_award = df_award.drop_duplicates(keep='first')
 
 #  Match detail for each event
 # df_matches = fetch_data('get_matches')
@@ -125,7 +122,6 @@ df_vranking = pd.merge(df_seasons, df_vranking,
 df_skills = pd.merge(df_events, df_skills, on='sku', how='left', sort=False)
 
 df_results = pd.merge(df_events, df_rank, on='sku', how='left', sort=False)
-
 
 ############################# Column Names #####################################
 
@@ -156,12 +152,21 @@ print('results: ', list(df_results))
 
 ############################# Program Tables ###################################
 
+input('Press Enter to continue...')
+os.system('clear')
 print('List of Awards and Program Totals')
 award_table3 = pd.pivot_table(
     df_award, index=['award'], aggfunc={'award': len})
 award_table3.index.names = ['Awards']
 print(award_table3.sort_values(by='award', ascending=False))
 print()
+
+award_table = pd.pivot_table(
+    df_award, index=['number'], aggfunc={'award': len})
+if not award_table.empty:
+    print('Awards won per Team')
+    print(award_table.sort_values(by='award', ascending=False))
+    print()
 
 print('Program V-Rating - All Teams All Seasons')
 vrank_table = pd.pivot_table(df_vranking, index=['organisation'], values={
@@ -184,13 +189,15 @@ print()
 ################### Team Tables ################################################
 
 for team in team_list:
+    input('Press Enter to continue...')
+    os.system('clear')
     print(f'######################## {team} #########################')
     filtered = df_award[df_award['number'] == f'{team}']
     award_table2 = pd.pivot_table(
         filtered, index=['award'], aggfunc={'award': len})
     award_table2.index.names = [f'{team}']
     if not award_table2.empty:
-        print('Total Awards Won per Award')
+        print('Total Awards Won')
         print(award_table2.sort_values(by='award', ascending=False))
         print()
 
@@ -239,6 +246,8 @@ for team in team_list:
 seasons = df_seasons['season']
 
 for season in seasons:
+    input('Press Enter to continue...')
+    os.system('clear')
     print(f'######################## {season} #########################')
     filtered = df_award[df_award['season'] == f'{season}']
     award_table = pd.pivot_table(
@@ -284,7 +293,7 @@ for season in seasons:
     filtered = df_results[df_results['season'] == f'{season}']
     results_table2 = pd.pivot_table(filtered, index=['number'], values=[
                                     'wins', 'losses', 'ties'], aggfunc=np.sum)
-    if not results_table1.empty:
+    if not results_table2.empty:
         print('Total Wins-Loss-Ties per Team')
         print(results_table2.sort_values(by='wins', ascending=False))
         print()
@@ -292,7 +301,7 @@ for season in seasons:
     filtered = df_results[df_results['season'] == f'{season}']
     results_table3 = pd.pivot_table(
         filtered, index=['number'], values=['wp', 'ap', 'sp'], aggfunc=np.mean)
-    if not results_table1.empty:
+    if not results_table3.empty:
         print('Average WP-AP-SP per Team')
         print(results_table3)
         print()
@@ -300,7 +309,7 @@ for season in seasons:
     filtered = df_results[df_results['season'] == f'{season}']
     results_table4 = pd.pivot_table(
         filtered, index=['number'], values=['opr', 'dpr', 'ccwm'], aggfunc=np.mean)
-    if not results_table1.empty:
+    if not results_table4.empty:
         print('Average opr-dpr-ccwm per Team')
         print(results_table4.sort_values(by='ccwm', ascending=False))
         print()
