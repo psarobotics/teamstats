@@ -60,6 +60,8 @@ A = {'award': ['Excellence Award', 'Tournament Champions', 'Tournament Finalists
 
 df_seasons = pd.DataFrame(data=S)
 df_awardlist = pd.DataFrame(data=A)
+# df_states= {'RE-VRC-10-3486', 'RE-VRC-11-6463', 'RE-VRC-13-9325', 'RE-VRC-14-0671', 'RE-VRC-15-1909', 'RE-VRC-16-3837',
+#             'RE-VRC-16-4303', 'RE-VRC-16-1501', 'RE-VRC-17-1912', 'RE-VRC-17-3161', 'RE-VRC-18-5973', 'RE-VRC-19-9740'}
 
 
 def fetch_data(get):
@@ -165,38 +167,46 @@ print('results: ', list(df_results))
 input('Press Enter to continue...')
 os.system('clear')
 print('List of all Awards Won by all Schools')
-award_table3 = pd.pivot_table(
+all_schools_table = pd.pivot_table(
     df_award, index=['award'], aggfunc={'award': len})
-award_table3.index.names = ['Awards']
-print(award_table3.sort_values(by='award', ascending=False))
+all_schools_table.index.names = ['Awards']
+print(all_schools_table.sort_values(by='award', ascending=False))
 print()
 
-award_table = pd.pivot_table(
+school_table = pd.pivot_table(
     df_award, index=['organisation'], aggfunc={'award': len})
-if not award_table.empty:
+if not school_table.empty:
     print('Awards won per School')
-    print(award_table.sort_values(by='award', ascending=False).head(25))
+    print(school_table.sort_values(by='award', ascending=False).head(25))
     print()
 
-award_table = pd.pivot_table(
+team_table = pd.pivot_table(
     df_award, index=['number'], aggfunc={'award': len})
-if not award_table.empty:
+if not team_table.empty:
     print('Awards won per Team')
-    print(award_table.sort_values(by='award', ascending=False).head(25))
+    print(team_table.sort_values(by='award', ascending=False).head(25))
     print()
 
 print('Program V-Rating - Top 25 Schools All Seasons')
-vrank_table = pd.pivot_table(df_vranking, index=['organisation'], values={
+school_vrank_table = pd.pivot_table(df_vranking, index=['organisation'], values={
     'vrating', 'vrating_rank'})
-print(vrank_table.sort_values(by='vrating', ascending=False).head(25))
+print(school_vrank_table.sort_values(by='vrating', ascending=False).head(25))
 print()
 
 print('Average V-Rating Top 25 Teams All Seasons')
-vrank_table = pd.pivot_table(df_vranking, index=['number'], values={
+team_vrank_table = pd.pivot_table(df_vranking, index=['number'], values={
     'vrating', 'vrating_rank'})
-print(vrank_table.sort_values(by='vrating', ascending=False).head(25))
+print(team_vrank_table.sort_values(by='vrating', ascending=False).head(25))
 print()
 
+
+with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/SC_Tables.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
+    all_schools_table.to_excel(writer, sheet_name='Awards Totals', index=False)
+    school_table.to_excel(writer, sheet_name='School Awards', index=False)
+    team_table.to_excel(writer, sheet_name='Team Awards', index=False)
+    school_vrank_table.to_excel(
+        writer, sheet_name='School Vranking', index=False)
+    team_vrank_table.to_excel(writer, sheet_name='Team Vranking', index=False)
 ################### Season Results #############################################
 seasons = df_seasons['season']
 
