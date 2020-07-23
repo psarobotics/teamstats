@@ -139,7 +139,7 @@ print('results: ', list(df_results))
 
 ############################# Export to Excel ##################################
 
-# with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/PSA_Robotics.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
+# with pd.ExcelWriter('teamstats.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
 #    df_results.to_excel(writer, sheet_name='Event Results', index=False)
 #    df_award.to_excel(writer, sheet_name='Awards', index=False)
 #    df_skills.to_excel(writer, sheet_name='Skills', index=False)
@@ -316,7 +316,7 @@ for season in seasons:
 
 ################################################################################
 
-# with pd.ExcelWriter('/home/wandored/Google Drive/Vex Robotics/PSA_Tables.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
+# with pd.ExcelWriter('teamtables.xlsx') as writer:  # pylint: disable=abstract-class-instantiated
 #    vrank_table.to_excel(writer, sheet_name='Vrank')
 #    award_table.to_excel(writer, sheet_name='award')
 #    award_table2.to_excel(writer, sheet_name='award2')
